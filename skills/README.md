@@ -1,6 +1,6 @@
 # 🤖 影刀 RPA 机器人管理与运行 Skill
 
-Version：1.0.3
+ - Version：1.0.3
 
 ### 通过自然语言，让你的OpenClaw、Hermes、Codex、ClaudeCode、Trae等智能体，轻松驾驭影刀 RPA 机器人！
 
@@ -290,8 +290,17 @@ start shadowbot:Run?robot-uuid={uuid}
 
 ---
 
+## ⚖️ 免责声明
+
+- 本项目仅供学习交流使用，请勿用于任何商业或非法用途！
+- 如果本项目涉及任何侵权情况，请联系作者（[GitHub](https://github.com/HnBigVolibear)）立即下架处理。
+
+---
 
 **⭐ 如果这个项目对你有帮助，请给一个 Star！**
 
 *Made with ❤️ by 湖南大白熊*
 
+#### Buy me a Coffee:
+
+![img](../sponsor.png)

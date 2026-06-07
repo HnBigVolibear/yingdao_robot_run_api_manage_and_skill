@@ -196,6 +196,11 @@ pyinstaller --windowed --onefile --name "湖南大白熊的影刀RPA接口管理
 
 ![img](./sponsor.png)
 
+## ⚖️ 免责声明
+
+- 本项目仅供学习交流使用，请勿用于任何商业或非法用途！
+- 如果本项目涉及任何侵权情况，请联系作者（[GitHub](https://github.com/HnBigVolibear)）立即下架处理。
+
 ## License
 
 MIT License
