@@ -1,7 +1,7 @@
 ---
 name: "yingdao-robot-run-skill"
-description: "Manage and launch 影刀Yingdao(ShadowBot) RPA robots. Invoke when user wants to setup/list/search/info/run/stop robots, check running status, or analyze logs to identify running robot."
-version: "1.0.3"
+description: "Manage and launch 影刀Yingdao(ShadowBot) RPA robots. Invoke when user wants to setup/list/search/info/run/stop robots, check running status, show configuration, analyze logs to identify running robot, or pass parameters when launching robots."
+version: "1.0.4"
 ---
 
 # 影刀 Yingdao Robot Run Skill
@@ -16,7 +16,7 @@ This skill enables the agent to manage and control Yingdao (影刀/ShadowBot) RP
 2. **List all robots / 列出所有机器人** — Query robots under the current Yingdao account, default shows the 20 most recently modified; supports specifying count / 查询当前影刀账号下的机器人，默认显示最近修改的20个，支持指定数量
 3. **Search robots by name or UUID / 按名称或 UUID 搜索机器人** — Fuzzy search robots by name keyword or UUID / 按名称关键词或 UUID 模糊搜索
 4. **Get robot details / 查询机器人详情** — Get detailed info of a specific robot by UUID / 通过 UUID 获取机器人详细信息
-5. **Launch a robot by UUID / 通过 UUID 启动机器人** — Start a specific robot using the `shadowbot:Run` protocol / 使用 `shadowbot:Run` 协议启动指定机器人
+5. **Launch a robot by UUID / 通过 UUID 启动机器人** — Start a specific robot using the `shadowbot:Run` protocol, supports passing parameters via `&key=value` / 使用 `shadowbot:Run` 协议启动指定机器人，支持通过 `&key=value` 传入参数
 6. **Stop running robot / 停止运行中的机器人** — Stop the currently running robot by sending Ctrl+Alt+Q hotkey / 发送 Ctrl+Alt+Q 快捷键停止当前运行的机器人
 7. **Check robot running status / 检查运行状态** — Detect whether ShadowBot is currently running a robot / 检测影刀当前是否正在运行机器人
 8. **Analyze running robot via log / 通过日志分析运行中的机器人** — Parse ShadowBot log to identify which robot is currently running, including name, UUID, start time, Engine PID, Engine ID, and trigger method / 解析影刀日志定位当前运行的机器人，包括名称、UUID、启动时间、Engine PID、Engine ID 和触发方式
@@ -127,12 +127,24 @@ Returns detailed info of a specific robot: name, UUID, version, author, descript
 ### 4. Launch a Robot by UUID / 通过 UUID 启动机器人
 
 ```bash
+# 不带参数启动
 python robot_skill.py run "robot-uuid-here"
+
+# 带参数启动（key=value 格式，多个参数用空格分隔）
+python robot_skill.py run "robot-uuid-here" key1=value1 key2=value2
 ```
 
-This executes `start shadowbot:Run?robot-uuid={uuid}` to launch the robot. After launching, it automatically waits 5 seconds and then runs a status check (with `skip_activation=True` to avoid re-activating the ShadowBot window and interfering with the just-launched robot) to verify whether the robot is actually running.
+This executes `start shadowbot:Run?robot-uuid={uuid}&key1=value1&key2=value2` to launch the robot. After launching, it automatically waits 5 seconds and then runs a status check (with `skip_activation=True` to avoid re-activating the ShadowBot window and interfering with the just-launched robot) to verify whether the robot is actually running.
+
+**Parameter Passing / 传参说明**：The `shadowbot:Run` protocol supports passing parameters via URL query string. Parameters are appended as `&key=value` pairs after `robot-uuid`. For example, `run "uuid" name=张三 age=25` generates URL: `shadowbot:Run?robot-uuid=uuid&name=张三&age=25`.
+
+**💡 Suggestion / 建议**：When the user explicitly wants to pass parameters to a robot, the Agent should first run the `info` command to query the robot's details (description, etc.) to see if the expected parameter format is documented, and then execute `run` with the correct parameters. This helps avoid passing incorrect parameter names or formats.
 
 通过 `shadowbot:Run` 协议启动机器人，启动后自动等待 5 秒并执行状态检测（跳过窗口激活以避免干扰刚启动的机器人），验证机器人是否成功运行。
+
+**传参说明**：`shadowbot:Run` 协议支持通过 URL query 传参，参数以 `&key=value` 格式追加在 `robot-uuid` 之后。例如 `run "uuid" name=张三 age=25` 会生成 URL：`shadowbot:Run?robot-uuid=uuid&name=张三&age=25`。
+
+**💡 建议**：当用户明确表示要传参启动机器人时，Agent 应先执行 `info` 命令查询该机器人的详情（描述等信息），看看能否获取到具体的入参格式，然后再用正确的参数执行 `run` 命令，避免传入错误的参数名或格式。
 
 ### 5. Stop Running Robot / 停止运行中的机器人
 
@@ -216,6 +228,8 @@ Displays current environment variable values, whether paths exist, and robot cou
 - When user asks to "搜索机器人", "查找XXX机器人", "有没有叫XXX的机器人", use the `search` command with the keyword.
 - When user asks to "机器人详情", "XXX机器人信息", "查看XXX机器人", use the `info` command with the UUID.
 - When user asks to "启动机器人", "运行XXX机器人", "跑一下XXX", first search to find the UUID, then use the `run` command.
+- When user asks to "带参启动机器人", "运行XXX机器人并传入参数", "跑一下XXX传入YYY", first use `info` to check robot details for parameter format hints, then use the `run` command with `key=value` params (e.g., `run "uuid" name=张三 age=25`).
+- 用户要求传参启动机器人时，Agent 应先执行 `info` 命令查询该机器人详情，看看描述等信息中是否标注了入参格式，再使用正确的参数执行 `run` 命令。
 - When user asks to "停止机器人", "停掉机器人", "中止运行", use the `stop` command.
 - When user asks to "机器人状态", "是否在运行", "运行情况", use the `status` command.
 - When user asks to "哪个机器人在运行", "当前运行的机器人", "查看正在运行的机器人", "正在跑什么机器人", use the `log` command to analyze ShadowBot logs and identify the running robot. The `log` command can also be used as a supplement after `status` reports a robot is running, to get detailed info about which robot it is.
@@ -231,3 +245,4 @@ Displays current environment variable values, whether paths exist, and robot cou
 - Robot launch includes an automatic status check 5 seconds after launching to verify the robot started successfully. Similarly, stop includes a 5-second delayed status check to verify the robot has stopped, with automatic log-based secondary verification if window detection is unreliable. / 启动机器人后自动等待 5 秒检测状态验证是否成功运行；停止机器人后同样等待 5 秒验证是否已停止，窗口检测不可靠时自动通过日志二次验证。
 - The running status detection uses `start shadowbot:` activation + window size analysis, which has been tested and verified to work reliably. / 运行状态检测使用 `start shadowbot:` 激活 + 窗口尺寸分析，已测试验证可靠。
 - The `log` command parses ShadowBot's main log file at `%LOCALAPPDATA%\ShadowBot\log\YYYYMMDD.log` (path is dynamically resolved, no hardcoded paths). It identifies the most recently started active robot by matching log entries with `GetExitCodeProcess` process liveness checks, reporting name, UUID, start time, Engine PID, Engine ID, and trigger method. / `log` 命令解析影刀主日志文件 `%LOCALAPPDATA%\ShadowBot\log\YYYYMMDD.log`（路径动态解析，无硬编码路径），通过匹配日志记录并使用 `GetExitCodeProcess` 进程存活检测，定位最近启动的活跃机器人，报告名称、UUID、启动时间、Engine PID、Engine ID 和触发方式。
+- The `run` command supports passing parameters via `&key=value` in the URL. Parameter values containing `&`, `=`, `#`, `%`, or spaces are automatically URL-encoded (e.g., `&` → `%26`). Chinese characters are kept as-is (verified to work with ShadowBot). When the user explicitly wants to pass parameters, the Agent should first use the `info` command to check the robot's description for expected parameter format. / `run` 命令支持通过 URL `&key=value` 传参。参数值中的 `&`、`=`、`#`、`%`、空格会自动做 URL 编码（如 `&` → `%26`），中文字符保持原样（已验证影刀支持）。当用户明确要传参时，Agent 应先执行 `info` 查看机器人描述中的入参格式。

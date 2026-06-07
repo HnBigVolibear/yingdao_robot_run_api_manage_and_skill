@@ -1,10 +1,13 @@
 # 🤖 影刀 RPA 机器人管理与运行 Skill
 
- - Version：1.0.3
+ - 20260607 史诗级上线！影刀RPA正式进入AI智能体时代！
+ - 20260608 版本更新：V1.0.4，支持传参启动机器人！！！
 
 ### 通过自然语言，让你的OpenClaw、Hermes、Codex、ClaudeCode、Trae等智能体，轻松驾驭影刀 RPA 机器人！
 
-*社区免费版适用！无需企业管理控制台 API · 完全免费 · 开箱即用*
+- *社区免费版适用！无需企业管理控制台 API · 完全免费 · 开箱即用*
+
+- *没错！别找了！这里就是你想要的影刀 Skill ！*
 
 ---
 
@@ -12,7 +15,7 @@
 
 本项目是一个 **Skill**，用于通过自然语言指令管理和控制本地 [影刀（ShadowBot）](https://www.yingdao.com/) RPA 机器人。
 
-专为 **免费社区版** 设计，无需企业管理控制台 API，无需额外依赖，安装配置后即可在 Trae IDE 中通过对话方式操控你的 RPA 机器人。
+专为 **免费社区版** 设计，无需企业管理控制台 API，无需额外依赖，安装配置后即可通过对话方式操控你的 RPA 机器人。
 
 > 💡 **核心理念**：用说话代替点击，让 AI 成为你的 RPA 助手
 
@@ -26,8 +29,8 @@
 | 🔵 | `list` | 列出机器人 | 默认显示最近20个，支持指定数量（`list 50` 或 `list 0` 显示全部） |
 | 🔍 | `search` | 搜索机器人 | 按名称关键词或 UUID 模糊搜索 |
 | 📋 | `info` | 查询机器人详情 | 通过 UUID 获取机器人详细信息 |
-| 🚀 | `run` | 启动机器人 | 使用 `shadowbot:Run` 协议启动指定机器人 |
-| 🛑 | `stop` | 停止机器人 | 发送 Ctrl+Alt+Q 快捷键停止运行中的机器人，窗口检测不确定时自动通过日志二次验证 |
+| 🚀 | `run` | ★启动机器人 | 使用 `shadowbot:Run` 协议启动指定机器人，支持通过 `&key=value` 传参！ |
+| 🛑 | `stop` | ☆停止机器人 | 发送 Ctrl+Alt+Q 快捷键停止运行中的机器人，窗口检测不确定时自动通过日志二次验证 |
 | 📊 | `status` | 检查运行状态 | 检测影刀当前是否正在运行机器人 |
 | 📝 | `log` | 日志分析运行机器人 | 解析影刀日志 + 进程存活检测，精确定位当前运行的机器人（名称、UUID、启动时间、PID、触发方式等） |
 | ⚙️ | `config` | 查看配置 | 显示当前环境变量配置信息 |
@@ -88,10 +91,16 @@ python robot_skill.py info "robot-uuid-here"
 
 ### 🚀 启动机器人 — `run`
 
-通过 `shadowbot:Run` 协议启动机器人，启动后自动等待 5 秒并检测运行状态，验证是否成功运行。
+通过 `shadowbot:Run` 协议启动机器人，支持通过 `&key=value` 传入参数！启动后自动等待 5 秒并检测运行状态，验证是否成功运行。
+
+> 💡 **传参建议**：当用户明确要传参时，AI 会先执行 `info` 查看机器人描述中的入参格式，再用正确参数启动。
 
 ```bash
+# 不带参数启动
 python robot_skill.py run "robot-uuid-here"
+
+# 带参数启动（key=value 格式，多个参数用空格分隔）
+python robot_skill.py run "robot-uuid-here" name=张三 age=25
 ```
 
 ---
@@ -193,6 +202,7 @@ python robot_skill.py config
 | "搜索XXX机器人" / "有没有叫XXX的" | `search "XXX"` |
 | "查看XXX机器人详情" | `info <UUID>` |
 | "运行XXX机器人" / "跑一下XXX" | `run <UUID>` |
+| "带参运行XXX机器人" / "跑一下XXX传入YYY" | `info <UUID>` → `run <UUID> key=value` |
 | "停止机器人" / "停掉机器人" | `stop` |
 | "机器人状态" / "是否在运行" | `status` |
 | "哪个机器人在运行" / "查看正在运行的机器人" | `log`（日志分析定位） |
@@ -207,7 +217,7 @@ python robot_skill.py config
 ```
 skills/
 ├── 📖 README.md                              # 项目文档
-├── 📦 yingdao_robot_run_skill.zip            # Skill 打包文件
+├── 📦 yingdao_robot_run_skill_V1.0.4.zip     # Skill 打包文件
 └── yingdao_robot_run_skill/
     ├── 📄 SKILL.md                           # Skill 定义文件（Trae IDE 识别）
     └── 🐍 robot_skill.py                     # 核心功能脚本
@@ -238,8 +248,14 @@ skills/
 
 使用 `shadowbot:Run` URL Scheme 协议启动：
 ```
+# 不带参数
 start shadowbot:Run?robot-uuid={uuid}
+
+# 带参数
+start shadowbot:Run?robot-uuid={uuid}&key1=value1&key2=value2
 ```
+
+参数值中的 `&`、`=`、`#`、`%`、空格会自动做 URL 编码（如 `&` → `%26`），中文字符保持原样（已验证影刀支持）。
 
 ### 机器人停止
 
@@ -273,6 +289,7 @@ start shadowbot:Run?robot-uuid={uuid}
 - � **严禁直接杀掉 ShadowBot 进程**（如 `taskkill`、关闭 PID），会导致状态损坏和数据丢失，必须使用 `stop` 命令
 - �🛡️ 停止时若窗口检测不可靠，会自动通过日志二次验证确认停止结果
 - 📋 日志分析使用 `GetExitCodeProcess` 验证进程存活，确保检测结果准确
+- 🚀 启动机器人支持传参（`&key=value`），参数值中的特殊字符自动 URL 编码，中文保持原样；传参前建议先 `info` 查看入参格式
 
 ---
 

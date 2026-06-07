@@ -251,7 +251,7 @@ def list_robots(limit=20):
     """列出机器人，默认显示最近修改的20个，可通过 limit 参数指定数量"""
     is_ok, missing = check_config()
     if not is_ok:
-        print("❌ 配置未完成，无法获取机器人列表")
+        print(f"❌ 配置未完成，缺少: {', '.join(missing)}")
         print_config_guide()
         return
 
@@ -285,7 +285,7 @@ def search_robots(keyword):
     """按名字关键词或 UUID 搜索机器人"""
     is_ok, missing = check_config()
     if not is_ok:
-        print("❌ 配置未完成，无法搜索机器人")
+        print(f"❌ 配置未完成，缺少: {', '.join(missing)}")
         print_config_guide()
         return
 
@@ -313,11 +313,27 @@ def search_robots(keyword):
         print(f"{i:<4} {name:<30} {robot['uuid']:<40} {robot['version']:<8}")
 
 
-def run_robot(robot_uuid):
-    """通过 UUID 启动机器人"""
+def _encode_param_value(value):
+    """
+    对参数值做最小化 URL 编码
+    仅编码会破坏 URL 结构的字符（& = # 空格），保留中文等其他字符原样
+    影刀 shadowbot:Run 协议已验证支持直接传递中文参数值
+    """
+    return value.replace('%', '%25').replace('&', '%26').replace('=', '%3D').replace('#', '%23').replace(' ', '%20')
+
+
+def run_robot(robot_uuid, params=None):
+    """
+    通过 UUID 启动机器人，支持传入参数
+
+    参数:
+      robot_uuid — 机器人 UUID
+      params — 可选，参数字典，如 {"aaa": "123", "bbb": "hello"}
+               会拼接到 URL 中：shadowbot:Run?robot-uuid=xxx&aaa=123&bbb=hello
+    """
     is_ok, missing = check_config()
     if not is_ok:
-        print("❌ 配置未完成，无法启动机器人")
+        print(f"❌ 配置未完成，缺少: {', '.join(missing)}")
         print_config_guide()
         return
 
@@ -332,8 +348,16 @@ def run_robot(robot_uuid):
     else:
         robot_name = robot_uuid
 
-    # 使用命令行方式启动：start shadowbot:Run?robot-uuid={uuid}
-    command = f'@echo off\nstart shadowbot:Run?robot-uuid={robot_uuid}'
+    # 构建启动 URL
+    url = f'shadowbot:Run?robot-uuid={robot_uuid}'
+    if params:
+        for key, value in params.items():
+            # 最小化 URL 编码参数值，保留中文原样，仅编码会破坏 URL 结构的字符
+            url += f'&{key}={_encode_param_value(value)}'
+
+    # bat 文件中 & 需要用 ^ 转义
+    bat_url = url.replace('&', '^&')
+    command = f'@echo off\nchcp 65001 >nul\nstart {bat_url}'
 
     # 创建临时批处理文件执行（使用 NamedTemporaryFile 替代已弃用的 mktemp）
     try:
@@ -348,19 +372,22 @@ def run_robot(robot_uuid):
             close_fds=True
         )
 
-        # 延迟删除临时文件（等待足够时间确保 cmd 已读取文件）
+        # 延迟删除临时文件（等待 cmd 读取完毕后删除）
         def cleanup():
-            time.sleep(3)
             try:
                 os.unlink(bat_path)
             except Exception:
                 pass
 
-        threading.Timer(10.0, cleanup).start()
+        threading.Timer(3.0, cleanup).start()
 
         print(f"✅ 已启动机器人：{robot_name}")
         print(f"   UUID: {robot_uuid}")
-        print(f"   命令: start shadowbot:Run?robot-uuid={robot_uuid}")
+        if params:
+            print(f"   传入参数:")
+            for key, value in params.items():
+                print(f"     {key} = {value}")
+        print(f"   命令: start {url}")
         print()
         print("⏳ 等待 5 秒后检测运行状态...")
         time.sleep(5)
@@ -723,7 +750,7 @@ def robot_info(robot_uuid):
     """查询单个机器人的详细信息"""
     is_ok, missing = check_config()
     if not is_ok:
-        print("❌ 配置未完成，无法查询机器人信息")
+        print(f"❌ 配置未完成，缺少: {', '.join(missing)}")
         print_config_guide()
         return
 
@@ -987,7 +1014,7 @@ def main():
         print("  list [数量]        - 列出机器人（默认20个，0=全部）")
         print("  search <关键词>   - 搜索机器人")
         print("  info <UUID>       - 查询机器人详细信息")
-        print("  run <UUID>        - 启动机器人")
+        print("  run <UUID> [k=v...] - 启动机器人（支持 key=value 传参）")
         print("  stop              - 停止当前运行的机器人")
         print("  status            - 查询影刀运行状态")
         print("  log               - 通过日志分析当前运行的机器人")
@@ -1023,22 +1050,30 @@ def main():
         robot_uuid = sys.argv[2]
         if not _is_valid_uuid(robot_uuid):
             print(f"❌ 无效的 UUID 格式: {robot_uuid}")
-            print("   UUID 应为影刀分配的长字符串（通常为纯数字），而非机器人名称")
+            print("   UUID 应为影刀分配的长字符串（纯数字或含字母-连字符），而非机器人名称")
             print("   提示: 请先使用 search 命令搜索机器人获取其 UUID")
             return
         robot_info(robot_uuid)
     elif command == "run":
         if len(sys.argv) < 3:
             print("❌ 请提供机器人 UUID")
-            print("用法: python robot_skill.py run <UUID>")
+            print("用法: python robot_skill.py run <UUID> [key1=value1 key2=value2 ...]")
             return
         robot_uuid = sys.argv[2]
         if not _is_valid_uuid(robot_uuid):
             print(f"❌ 无效的 UUID 格式: {robot_uuid}")
-            print("   UUID 应为影刀分配的长字符串（通常为纯数字），而非机器人名称")
+            print("   UUID 应为影刀分配的长字符串（纯数字或含字母-连字符），而非机器人名称")
             print("   提示: 请先使用 search 命令搜索机器人获取其 UUID")
             return
-        run_robot(robot_uuid)
+        # 解析额外参数（key=value 格式）
+        params = {}
+        for arg in sys.argv[3:]:
+            if '=' in arg:
+                key, value = arg.split('=', 1)
+                params[key.strip()] = value.strip()
+            else:
+                print(f"⚠️ 忽略无效参数格式: {arg}（应为 key=value）")
+        run_robot(robot_uuid, params if params else None)
     elif command == "stop":
         stop_robot()
     elif command == "status":
