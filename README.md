@@ -1,4 +1,4 @@
-# 湖南大白熊的影刀RPA接口管理平台 与 Skill技能
+# 影刀RPA接口管理运行平台 与 Skill技能
 - V0.0.2 
 - Flet应用软件：win端，支持影刀社区版！！！暴露API供远程调用一键启动影刀机器人！！！
 - Skill技能，提供通过自然语言让Agent智能体自动操控影刀机器人功能。
@@ -190,7 +190,7 @@ pyinstaller --windowed --onefile --name "湖南大白熊的影刀RPA接口管理
 **湖南大白熊** - 影刀RPA高级开发者^_^
 
 - GitHub主页: [https://github.com/HnBigVolibear](https://github.com/HnBigVolibear)
-- 本项目仓库开源地址：[https://github.com/HnBigVolibear/yingdao_robot_run_api_manage](https://github.com/HnBigVolibear/yingdao_robot_run_api_manage)
+- 本项目仓库开源地址：[https://github.com/HnBigVolibear/yingdao_robot_run_api_manage_and_skill](https://github.com/HnBigVolibear/yingdao_robot_run_api_manage_and_skill)
 
 ### Buy me a Coffee:
 
@@ -198,8 +198,8 @@ pyinstaller --windowed --onefile --name "湖南大白熊的影刀RPA接口管理
 
 ## ⚖️ 免责声明
 
-- 本项目仅供学习交流使用，请勿用于任何商业或非法用途！
-- 如果本项目涉及任何侵权情况，请联系作者（[GitHub](https://github.com/HnBigVolibear)）立即下架处理。
+- 本项目仅供学习交流使用，请勿用于任何商业或非法用途！！！
+- 如果本项目涉及任何侵权情况，请联系作者（[GitHub](https://github.com/HnBigVolibear)）立即下架处理！！！
 
 ## License
 
