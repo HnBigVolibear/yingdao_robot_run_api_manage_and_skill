@@ -355,8 +355,8 @@ def run_robot(robot_uuid, params=None):
             # 最小化 URL 编码参数值，保留中文原样，仅编码会破坏 URL 结构的字符
             url += f'&{key}={_encode_param_value(value)}'
 
-    # bat 文件中 & 需要用 ^ 转义
-    bat_url = url.replace('&', '^&')
+    # bat 文件中 & 需要用 ^ 转义，% 需要用 %% 转义（否则 %26 等URL编码会被cmd.exe误解析为位置参数）
+    bat_url = url.replace('&', '^&').replace('%', '%%')
     command = f'@echo off\nchcp 65001 >nul\nstart {bat_url}'
 
     # 创建临时批处理文件执行（使用 NamedTemporaryFile 替代已弃用的 mktemp）
